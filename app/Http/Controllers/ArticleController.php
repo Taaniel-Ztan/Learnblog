@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use App\Http\Requests\StoreArticleRequest;
 use App\Http\Requests\UpdateArticleRequest;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 class ArticleController extends Controller
@@ -14,7 +15,8 @@ class ArticleController extends Controller
      */
     public function index()
     {
-        $articles = Article::latest()->paginate();
+        //$articles = User::find(3)->articles()->latest()->paginate();
+        $articles = auth()->user()->articles()->latest()->paginate();
         return view('articles.index', compact('articles'));
     }
 
@@ -41,8 +43,11 @@ class ArticleController extends Controller
     public function store(StoreArticleRequest $request)
     {
         $article = new Article($request->validated());
-        $file = $request->file('image')->store('/public');
-        $article->image = Storage::url($file);
+        if($request->file('image')) {
+            $file = $request->file('image')->store('/public');
+            $article->image = Storage::url($file);
+        }
+        $article->user()->associate(auth()->user());
         $article->save();
         return redirect()->route('articles.index');
     }
